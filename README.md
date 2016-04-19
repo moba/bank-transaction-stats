@@ -4,14 +4,14 @@ This is a script that I use to generate statistics over a CSV exported from a ba
 
 This bank uses "CSV-MT940" format, but the script currently relies on some named headers for date, amount, and source account import. Also, since Sparkasse exports the amount with German currency divider (10,00€ instead of 10.00€), it will very likely need some adaptation for different banks and different currencies even if they use the same format.
 
-Patches welcome for support of more imports.
-https://github.com/moba
+Patches that add support for more banks/formats welcome.
+https://github.com/moba/bank-transaction-stats
 
 ## output/usage example
 (no this is not real data)
 
 ```
-❯ ./bank-transaction-stats.py 20160419-32149842-umsatz.CSV 2000
+❯ ./bank-transaction-stats.py 20160419-32149842-umsatz.CSV 2140.20
 From 2016-01-04 to 2016-04-18
 
 Start balance: 2140.20
