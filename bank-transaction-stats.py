@@ -27,7 +27,7 @@ try:
     for i in range(1, len(argv)):
         csv_filename = argv[i]
         try:
-            csvfiles.add(open(csv_filename, 'rb'))
+            csvfiles.add(open(csv_filename, 'rb')) # yes, binary mode is correct as per csv.reader documentation
         except:
             break
     try:
