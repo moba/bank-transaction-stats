@@ -22,15 +22,20 @@ SOURCE_ACCOUNT = "Kontonummer"
 ###########################################################
 
 # parse command line
+csvfiles = set()
 try:
-    csv_filename = argv[1]
-    csvfile = open(csv_filename, 'rb')
+    for i in range(1, len(argv)):
+        csv_filename = argv[i]
+        try:
+            csvfiles.add(open(csv_filename, 'rb'))
+        except:
+            break
     try:
-        start_balance = float(argv[2])
+        start_balance = float(argv[-1])
     except:
         start_balance = 0
 except:
-    print argv[0] + ' transactions.csv [startbalance]'
+    print argv[0] + ' transactions.csv [transactions2.csv...] [startbalance]'
     exit(2)
 
 # prepare dictionary for transactions
@@ -44,14 +49,16 @@ transactions = Transactions()
 countries = Counter()
 
 # import csv
-reader = csv.DictReader(csvfile, delimiter=';')
-for row in reader:
-    date = datetime.strptime(row[DATE_FIELD], '%d.%m.%y').date()
-    amount = float(row[AMOUNT_FIELD].replace(',','.'))
-    transactions[date] = transactions[date]+[amount]
+for csvfile in csvfiles:
+    reader = csv.DictReader(csvfile, delimiter=';')
+    for row in reader:
+        date = datetime.strptime(row[DATE_FIELD], '%d.%m.%y').date()
+        amount = float(row[AMOUNT_FIELD].replace(',','.'))
+        transactions[date] = transactions[date]+[amount]
 
-    country = row[SOURCE_ACCOUNT][0:2]
-    countries[country] = countries[country]+1
+        country = row[SOURCE_ACCOUNT][0:2]
+        countries[country] = countries[country]+1
+    csvfile.close()
 
 transactions = OrderedDict(sorted(transactions.items())) # sort chronologically
 
