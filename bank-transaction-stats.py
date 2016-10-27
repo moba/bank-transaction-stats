@@ -15,9 +15,12 @@ from datetime import date, datetime
 from collections import OrderedDict
 from sys import argv
 
-DATE_FIELD = "Buchungstag"
-AMOUNT_FIELD = "Betrag"
-SOURCE_ACCOUNT = "Kontonummer"
+MT940_DATE_FIELD = "Buchungstag"
+MT940_AMOUNT_FIELD = "Betrag"
+MT940_SOURCE_ACCOUNT = "Kontonummer"
+AQ_DATE_FIELD = "date"
+AQ_AMOUNT_FIELD = "value_value"
+AQ_SOURCE_ACCOUNT = "remoteIban"
 
 ###########################################################
 
@@ -52,11 +55,19 @@ countries = Counter()
 for csvfile in csvfiles:
     reader = csv.DictReader(csvfile, delimiter=';')
     for row in reader:
-        date = datetime.strptime(row[DATE_FIELD], '%d.%m.%y').date()
-        amount = float(row[AMOUNT_FIELD].replace(',','.'))
-        transactions[date] = transactions[date]+[amount]
+	# ok, on every line we try to parse as aqbanking CSV first
+	# this could be optimized
+	try:
+	        date = datetime.strptime(row[AQ_DATE_FIELD], '%Y/%m/%d').date()
+	except:
+        	date = datetime.strptime(row[MT940_DATE_FIELD], '%d.%m.%y').date()
+        	amount = float(row[MT940_AMOUNT_FIELD].replace(',','.'))
+		country = row[MT940_SOURCE_ACCOUNT][0:2]
+	else:
+                 amount = float(row[AQ_AMOUNT_FIELD].replace('/100',''))/100
+                 country = row[AQ_SOURCE_ACCOUNT][0:2]
 
-        country = row[SOURCE_ACCOUNT][0:2]
+        transactions[date] = transactions[date]+[amount]
         countries[country] = countries[country]+1
     csvfile.close()
 
