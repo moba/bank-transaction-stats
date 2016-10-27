@@ -1,8 +1,8 @@
 # bank-transaction-stats.py
 
-This is a script that I use to generate statistics over a CSV exported from a bank account at a German Sparkasse bank that I don't have EBICS/HBCI access to.
+This is a script that I use to generate statistics over CSV files exported from a bank account at a German Sparkasse bank that I don't have EBICS/HBCI access to, and for CSV exports from [aqbanking](https://www.aquamaniac.de/sites/aqbanking/) ("full" profile).
 
-This bank uses "CSV-MT940" format, but the script currently relies on some named headers for date, amount, and source account import. Also, since Sparkasse exports the amount with German currency divider (10,00€ instead of 10.00€), it will very likely need some adaptation for different banks and different currencies even if they use the same format.
+The script first tries to parse the CSV using the aqbanking format, and then falls back to the variant of "CSV-MT940" used by that German Sparkasse. It relies on some named headers, and, since Sparkasse exports the amount with German currency divider (10,00€ instead of 10.00€), it will very likely need some adaptation for different banks and different currencies even if they use the same "CSV format".
 
 Patches that add support for more banks/formats welcome.
 https://github.com/moba/bank-transaction-stats
@@ -11,7 +11,7 @@ https://github.com/moba/bank-transaction-stats
 (no this is not real data)
 
 ```
-❯ ./bank-transaction-stats.py 20160419-32149842-umsatz.CSV 2140.20
+❯ ./bank-transaction-stats.py transactions-*.csv 2140.20
 From 2016-01-04 to 2016-04-18
 
 Start balance: 2140.20
