@@ -14,6 +14,7 @@ import csv
 from datetime import date, datetime
 from collections import OrderedDict, Counter
 from sys import argv
+import re
 
 MT940_DATE_FIELD = "Buchungstag"
 MT940_AMOUNT_FIELD = "Betrag"
@@ -48,6 +49,8 @@ class Transactions(dict):
 transactions = Transactions()
 countries = Counter()
 
+CONTAINS_DIGIT = re.compile('\d')
+
 # import csv
 for csvfile in csvfiles:
     reader = csv.DictReader(csvfile, delimiter=';')
@@ -63,6 +66,10 @@ for csvfile in csvfiles:
 	else:
                 amount = float(row[AQ_AMOUNT_FIELD].replace('/100',''))/100
                 country = row[AQ_SOURCE_ACCOUNT][0:2]
+
+        # if extracted country code contains numbers or is empty, source country is unknown
+        if ( (CONTAINS_DIGIT.search(country)) or (not country) ):
+            country = "?"
 
         transactions[date] = transactions[date]+[amount]
         countries[country] = countries[country]+1
@@ -116,4 +123,3 @@ print "-" * 33
 for country in countries:
     print "{:<2}      | {}".format(country, countries[country])
 print "-" * 33
-print "(as you can see, source country detection is not perfect yet)"
