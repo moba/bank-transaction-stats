@@ -12,7 +12,7 @@
 
 import csv
 from datetime import date, datetime
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from sys import argv
 
 MT940_DATE_FIELD = "Buchungstag"
@@ -45,9 +45,6 @@ except:
 class Transactions(dict):
     def __missing__(self, key):
         return list()
-class Counter(dict):
-    def __missing__(self,key):
-        return 0
 transactions = Transactions()
 countries = Counter()
 
@@ -64,8 +61,8 @@ for csvfile in csvfiles:
         	amount = float(row[MT940_AMOUNT_FIELD].replace(',','.'))
 		country = row[MT940_SOURCE_ACCOUNT][0:2]
 	else:
-                 amount = float(row[AQ_AMOUNT_FIELD].replace('/100',''))/100
-                 country = row[AQ_SOURCE_ACCOUNT][0:2]
+                amount = float(row[AQ_AMOUNT_FIELD].replace('/100',''))/100
+                country = row[AQ_SOURCE_ACCOUNT][0:2]
 
         transactions[date] = transactions[date]+[amount]
         countries[country] = countries[country]+1
@@ -73,28 +70,46 @@ for csvfile in csvfiles:
 
 transactions = OrderedDict(sorted(transactions.items())) # sort chronologically
 
-all_transactions = [num for elem in transactions.values() for num in elem]
+amounts = [num for elem in transactions.values() for num in elem]
 
 first_day = transactions.keys()[0]
 last_day  = transactions.keys()[-1]
 
+# print overview
 print "From {} to {}".format(first_day,last_day)
 print ""
 print "Start balance: %.2f" % float(start_balance)
-print "End balance: %.2f" % float(sum(all_transactions)+start_balance)
+print "End balance: %.2f" % float(sum(amounts)+start_balance)
 print ""
-print "Total number of transactions: " + str(len(all_transactions))
-print "Mean amount: %.2f" % float(sum(all_transactions)/max(len(all_transactions),1))
+print "Total number of transactions: " + str(len(amounts))
+print "Mean amount: %.2f" % float(sum(amounts)/max(len(amounts),1))
+
+# print daily summary
 print ""
-print "date     |   amount | number of transactions "
+print "date       |      total | number of transactions "
 print "-"*45
 
 for date in transactions:
-    amounts = transactions[date]
-    print "{} | {:>8} | {} ({})".format(date.strftime('%d.%m.%y') , sum(amounts), '*'*len(amounts), len(amounts))
+    daily_total = transactions[date]
+    print "{:<10} | {:>10} | {} ({})".format(date.strftime('%d.%m.%y') , sum(daily_total), '*'*len(daily_total), len(daily_total))
+
+print "-"*45
+print ""
+
+# print number of occurrences per amount
+
+amount_counter = Counter(amounts)
+
+print ""
+print "amount     | count | as bar"
+print "-"*45
+
+for amount, count in sorted(amount_counter.items()):
+    print "{:<10} | {:<5} | {}".format(amount, count, '#'*count)
 
 print "-"*45
 
+# print distribution of source countries
 print ""
 print "country | number of transactions"
 print "-" * 33
