@@ -15,6 +15,7 @@ from datetime import date, datetime
 from collections import OrderedDict, Counter
 from sys import argv
 import re
+import numpy
 
 MT940_DATE_FIELD = "Buchungstag"
 MT940_AMOUNT_FIELD = "Betrag"
@@ -78,6 +79,7 @@ for csvfile in csvfiles:
 transactions = OrderedDict(sorted(transactions.items())) # sort chronologically
 
 amounts = [num for elem in transactions.values() for num in elem]
+deposits = [num for num in amounts if num > 0]
 
 first_day = transactions.keys()[0]
 last_day  = transactions.keys()[-1]
@@ -89,7 +91,8 @@ print "Start balance: %.2f" % float(start_balance)
 print "End balance: %.2f" % float(sum(amounts)+start_balance)
 print ""
 print "Total number of transactions: " + str(len(amounts))
-print "Mean amount: %.2f" % float(sum(amounts)/max(len(amounts),1))
+print "Mean amount (deposits only): %.2f" % float(sum(deposits)/max(len(deposits),1))
+print "Median (deposits only): %.2f" % float(numpy.median(deposits))
 
 # print daily summary
 print ""
