@@ -11,7 +11,7 @@
 #  licensed under MIT
 
 import csv
-from datetime import date, datetime
+from datetime import datetime
 from collections import OrderedDict, Counter
 from sys import argv
 import re
@@ -31,22 +31,23 @@ csvfiles = set()
 try:
     for i in range(1, len(argv)):
         csv_filename = argv[i]
-        try:
-            csvfiles.add(open(csv_filename, 'rb')) # yes, binary mode is correct as per csv.reader documentation
-        except:
-            break
+        csvfiles.add(open(csv_filename, 'rb'))
+        # yes, binary mode is correct as per csv.reader documentation
     try:
         start_balance = float(argv[-1])
-    except:
+    except Exception:
         start_balance = 0
-except:
+except Exception:
     print argv[0] + ' transactions.csv [transactions2.csv...] [startbalance]'
     exit(2)
+
 
 # prepare dictionary for transactions
 class Transactions(dict):
     def __missing__(self, key):
         return list()
+
+
 transactions = Transactions()
 countries = Counter()
 
@@ -56,54 +57,55 @@ CONTAINS_DIGIT = re.compile('\d')
 for csvfile in csvfiles:
     reader = csv.DictReader(csvfile, delimiter=';')
     for row in reader:
-	# ok, on every line we try to parse as aqbanking CSV first
-	# this could be optimized
-	try:
-	        date = datetime.strptime(row[AQ_DATE_FIELD], '%Y/%m/%d').date()
-	except:
-        	date = datetime.strptime(row[MT940_DATE_FIELD], '%d.%m.%y').date()
-        	amount = float(row[MT940_AMOUNT_FIELD].replace(',','.'))
-		country = row[MT940_SOURCE_ACCOUNT][0:2]
-	else:
-                amount = float(row[AQ_AMOUNT_FIELD].replace('/100',''))/100
-                country = row[AQ_SOURCE_ACCOUNT][0:2]
+        # ok, on every line we try to parse as aqbanking CSV first
+        # this could be optimized
+        try:
+            transaction_date = datetime.strptime(row[AQ_DATE_FIELD], '%Y/%m/%d').date()
+        except Exception:
+            transaction_date = datetime.strptime(row[MT940_DATE_FIELD], '%d.%m.%y').date()
+            amount = float(row[MT940_AMOUNT_FIELD].replace(',', '.'))
+            country = row[MT940_SOURCE_ACCOUNT][0:2]
+        else:
+            amount = float(row[AQ_AMOUNT_FIELD].replace('/100', '')) / 100
+            country = row[AQ_SOURCE_ACCOUNT][0:2]
 
-        # if extracted country code contains numbers or is empty, source country is unknown
-        if ( (CONTAINS_DIGIT.search(country)) or (not country) ):
+        # if extracted country code contains numbers or is empty,
+        # source country is unknown
+        if ((CONTAINS_DIGIT.search(country)) or (not country)):
             country = "?"
 
-        transactions[date] = transactions[date]+[amount]
-        countries[country] = countries[country]+1
+        transactions[transaction_date] = transactions[transaction_date] + [amount]
+        countries[country] = countries[country] + 1
     csvfile.close()
 
-transactions = OrderedDict(sorted(transactions.items())) # sort chronologically
+transactions = OrderedDict(sorted(transactions.items()))  # sort chronologically
 
 amounts = [num for elem in transactions.values() for num in elem]
 deposits = [num for num in amounts if num > 0]
 
 first_day = transactions.keys()[0]
-last_day  = transactions.keys()[-1]
+last_day = transactions.keys()[-1]
 
 # print overview
-print "From {} to {}".format(first_day,last_day)
+print "From {} to {}".format(first_day, last_day)
 print ""
 print "Start balance: %.2f" % float(start_balance)
-print "End balance: %.2f" % float(sum(amounts)+start_balance)
+print "End balance: %.2f" % float(sum(amounts) + start_balance)
 print ""
 print "Total number of transactions: " + str(len(amounts))
-print "Mean amount (deposits only): %.2f" % float(sum(deposits)/max(len(deposits),1))
+print "Mean amount (deposits only): %.2f" % float(sum(deposits) / max(len(deposits), 1))
 print "Median (deposits only): %.2f" % float(numpy.median(deposits))
 
 # print daily summary
 print ""
 print "date       |      total | number of transactions "
-print "-"*45
+print "-" * 45
 
-for date in transactions:
-    daily_total = transactions[date]
-    print "{:<10} | {:>10} | {} ({})".format(date.strftime('%d.%m.%y') , sum(daily_total), '*'*len(daily_total), len(daily_total))
+for transaction_date in transactions:
+    daily_total = transactions[transaction_date]
+    print "{:<10} | {:>10} | {} ({})".format(transaction_date.strftime('%d.%m.%y'), sum(daily_total), '*' * len(daily_total), len(daily_total))
 
-print "-"*45
+print "-" * 45
 print ""
 
 # print number of occurrences per amount
@@ -112,12 +114,13 @@ amount_counter = Counter(amounts)
 
 print ""
 print "amount     | count | as bar"
-print "-"*45
+print "-" * 45
 
 for amount, count in sorted(amount_counter.items()):
-    print "{:<10} | {:<5} | {}".format(amount, count, '#'*count)
+    print "{:<10} | {:<5} | {}".format(amount, count, '#' * count)
 
-print "-"*45
+print "-" * 45
+print ""
 
 # print distribution of source countries
 print ""
