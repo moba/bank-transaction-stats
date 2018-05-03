@@ -29,14 +29,17 @@ AQ_SOURCE_ACCOUNT = "remoteIban"
 # parse command line
 csvfiles = set()
 try:
-    for i in range(1, len(argv)):
+    lastArgumentIsBalance = False
+    try:
+        start_balance = float(argv[-1])
+        lastArgumentIsBalance = True
+    except Exception:
+        start_balance = 0
+
+    for i in range(1, len(argv)-lastArgumentIsBalance):
         csv_filename = argv[i]
         csvfiles.add(open(csv_filename, 'rb'))
         # yes, binary mode is correct as per csv.reader documentation
-    try:
-        start_balance = float(argv[-1])
-    except Exception:
-        start_balance = 0
 except Exception:
     print argv[0] + ' transactions.csv [transactions2.csv...] [startbalance]'
     exit(2)
@@ -51,7 +54,7 @@ class Transactions(dict):
 transactions = Transactions()
 countries = Counter()
 
-CONTAINS_DIGIT = re.compile('\d')
+CONTAINS_DIGIT = re.compile(r'\d')
 
 # import csv
 for csvfile in csvfiles:
