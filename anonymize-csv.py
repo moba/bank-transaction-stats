@@ -16,6 +16,11 @@ AQ_DATE_FIELD = "date"
 AQ_AMOUNT_FIELD = "value_value"
 AQ_SOURCE_ACCOUNT = "remoteIban"
 
+transactionCodes = {
+        152: "standing order", # Dauerauftrag
+        166: "", # Ueberweisung
+        96: "rebooking", # Umbuchung
+        }
 ###########################################################
 
 # parse command line
@@ -38,6 +43,7 @@ CONTAINS_DIGIT = re.compile(r'\d')
 for csvfile in csvfiles:
     reader = csv.DictReader(csvfile, delimiter=';')
     for row in reader:
+        transactionCode = 0
         # ok, on every line we try to parse as aqbanking CSV first
         # this could be optimized
         try:
@@ -49,13 +55,14 @@ for csvfile in csvfiles:
         else:
             amount = float(row[AQ_AMOUNT_FIELD].replace('/100', '')) / 100
             country = row[AQ_SOURCE_ACCOUNT][0:2]
+            transactionCode = int(row['transactionCode'])
 
         # if extracted country code contains numbers or is empty,
         # source country is unknown
         if ((CONTAINS_DIGIT.search(country)) or (not country)):
             country = "?"
 
-        transactions.append([transaction_date.strftime("%d.%m.%y"), str(amount), country])
+        transactions.append([transaction_date.strftime("%d.%m.%y"), str(amount), country, str(transactionCodes[transactionCode])])
     csvfile.close()
 
 for transaction in transactions:
